@@ -5,7 +5,7 @@ import { CloseIcon, KindIcon, LocateIcon, SlidersIcon } from './Icons'
 import { confirmReport, goneReport, postReport } from './api'
 import { beep, notify, requestNotifications, unlockAudio } from './alerts'
 import { useGeolocation, useNow, useProximityAlerts, useReports, useSettings, useTheme } from './hooks'
-import { KINDS, formatDistance, formatLeft, haversine } from './lib'
+import { KINDS, PICK_RADIUS_M, formatDistance, formatLeft, haversine } from './lib'
 
 const KIND_ORDER = ['obstacle', 'police', 'accident', 'hazard']
 
@@ -21,6 +21,7 @@ export default function App() {
   const [selectedId, setSelectedId] = useState(null)
   const [follow, setFollow] = useState(true)
   const [target, setTarget] = useState(null)
+  const [spot, setSpot] = useState(null) // a place picked on the map to report at, instead of your position
   const [banner, setBanner] = useState(null)
   const [toast, setToast] = useState(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -92,14 +93,29 @@ export default function App() {
     if (pos) setTarget({ lat: pos.lat, lng: pos.lng })
   }
 
+  // Tapping the map picks a spot to report at, within 10 km of you.
+  const pickRadiusLabel = `${PICK_RADIUS_M / 1000} km`
+  const onMapClick = (ll) => {
+    if (selectedId) return setSelectedId(null)
+    if (!pos) return showToast('Turn on location first. Then you can tap the map to choose where to report.')
+    if (haversine(pos, ll) > PICK_RADIUS_M) return showToast(`Choose a spot within ${pickRadiusLabel} of you.`)
+    setSpot(ll)
+  }
+
   const report = async (kind) => {
     if (!pos) return showToast('Turn on location first, then send your report.')
+    if (spot && haversine(pos, spot) > PICK_RADIUS_M) {
+      setSpot(null)
+      return showToast(`The chosen spot is now more than ${pickRadiusLabel} away. Choose it again.`)
+    }
     if (Date.now() - lastPost.current < 8000) return showToast('Wait a moment before the next report.')
     lastPost.current = Date.now()
+    const at = spot || pos
     try {
-      const r = await postReport(kind, pos.lat, pos.lng)
+      const r = await postReport(kind, at.lat, at.lng)
       seen.current.add(r.id) // don't alert yourself about your own report
       upsert(r)
+      setSpot(null)
       showToast(`${KINDS[kind].label} reported. It stays on the map for 10 minutes.`)
     } catch (e) {
       showToast(e.message)
@@ -160,10 +176,12 @@ export default function App() {
         <MapView
           reports={live}
           pos={pos}
+          spot={spot}
           selectedId={selectedId}
           follow={follow}
           target={target}
           onSelect={setSelectedId}
+          onMapClick={onMapClick}
           onUserMove={() => setFollow(false)}
           onMoveEnd={setCenter}
         />
@@ -222,6 +240,30 @@ export default function App() {
                   {status === 'asking' ? 'Waiting for your phone…' : 'Turn on location and alerts'}
                 </button>
               )}
+            </section>
+          )}
+
+          {spot && pos && !selected && (
+            <section className="rounded-md border border-line bg-panel p-3">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <h2 className="font-display text-xl leading-tight font-semibold">Report at the chosen spot</h2>
+                  <p className="text-base text-mute">
+                    {formatDistance(haversine(pos, spot))} from you. Pick what it is below, or tap the map to move it.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSpot(null)}
+                  aria-label="Use my position instead"
+                  className="-mt-1 -mr-1 grid h-11 w-11 shrink-0 place-items-center"
+                >
+                  <CloseIcon className="h-5 w-5" />
+                </button>
+              </div>
+              <button type="button" onClick={() => setSpot(null)} className="btn mt-3 w-full">
+                Use my position instead
+              </button>
             </section>
           )}
 

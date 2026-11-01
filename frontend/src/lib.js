@@ -43,3 +43,24 @@ export function cellBox(key) {
     east: Math.min(180, (j + 2) / 10),
   }
 }
+
+// How far from your own position you can drop a report by tapping the map.
+export const PICK_RADIUS_M = 10000
+
+// A circle around `c` as a GeoJSON polygon, for drawing on the map.
+export function circle(c, radius, steps = 96) {
+  const R = 6371000
+  const rad = Math.PI / 180
+  const lat1 = c.lat * rad
+  const lng1 = c.lng * rad
+  const d = radius / R
+  const ring = []
+  for (let i = 0; i <= steps; i++) {
+    const brg = (i / steps) * 2 * Math.PI
+    const lat2 = Math.asin(Math.sin(lat1) * Math.cos(d) + Math.cos(lat1) * Math.sin(d) * Math.cos(brg))
+    const lng2 =
+      lng1 + Math.atan2(Math.sin(brg) * Math.sin(d) * Math.cos(lat1), Math.cos(d) - Math.sin(lat1) * Math.sin(lat2))
+    ring.push([lng2 / rad, lat2 / rad])
+  }
+  return { type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [ring] } }
+}

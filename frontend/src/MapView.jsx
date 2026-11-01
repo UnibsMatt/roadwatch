@@ -1,8 +1,8 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import * as maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url'
-import { KINDS, TTL_MS } from './lib'
+import { KINDS, PICK_RADIUS_M, TTL_MS, circle } from './lib'
 import { glyphMarkup } from './Icons'
 
 // MapLibre v6 looks for its worker next to its own file, which doesn't exist after
@@ -13,14 +13,20 @@ maplibregl.setWorkerUrl(workerUrl)
 // point VITE_TILE_URL at your own tile server (see README).
 const TILE_URL = import.meta.env.VITE_TILE_URL || 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
 
-export default function MapView({ reports, pos, selectedId, follow, target, onSelect, onUserMove, onMoveEnd }) {
+const EMPTY = { type: 'FeatureCollection', features: [] }
+
+export default function MapView({
+  reports, pos, spot, selectedId, follow, target, onSelect, onMapClick, onUserMove, onMoveEnd,
+}) {
   const box = useRef(null)
   const map = useRef(null)
   const pins = useRef(new Map())
   const me = useRef(null)
+  const spotMarker = useRef(null)
+  const [ready, setReady] = useState(false)
   const firstFix = useRef(true)
   const cb = useRef({})
-  cb.current = { onSelect, onUserMove, onMoveEnd }
+  cb.current = { onSelect, onMapClick, onUserMove, onMoveEnd }
 
   // create the map once
   useEffect(() => {
@@ -50,7 +56,17 @@ export default function MapView({ reports, pos, selectedId, follow, target, onSe
     m.on('dragstart', (e) => e.originalEvent && cb.current.onUserMove())
     m.on('click', (e) => {
       if (e.originalEvent?.target?.closest?.('.pin')) return
-      cb.current.onSelect(null)
+      cb.current.onMapClick({ lat: e.lngLat.lat, lng: e.lngLat.lng })
+    })
+    // The area you can drop a report in, shown while a spot is chosen.
+    m.on('load', () => {
+      m.addSource('pick-area', { type: 'geojson', data: EMPTY })
+      m.addLayer({ id: 'pick-area-fill', type: 'fill', source: 'pick-area', paint: { 'fill-color': '#2f6fdb', 'fill-opacity': 0.06 } })
+      m.addLayer({
+        id: 'pick-area-line', type: 'line', source: 'pick-area',
+        paint: { 'line-color': '#2f6fdb', 'line-width': 2, 'line-dasharray': [2, 2] },
+      })
+      setReady(true)
     })
     m.on('moveend', () => {
       const c = m.getCenter()
@@ -64,6 +80,8 @@ export default function MapView({ reports, pos, selectedId, follow, target, onSe
       map.current = null
       pins.current.clear()
       me.current = null
+      spotMarker.current = null
+      setReady(false)
     }
   }, [])
 
@@ -126,6 +144,26 @@ export default function MapView({ reports, pos, selectedId, follow, target, onSe
       m.easeTo({ center: [pos.lng, pos.lat], duration: 500 })
     }
   }, [pos, follow])
+
+  // the spot chosen by tapping the map, and the 10 km area around you
+  useEffect(() => {
+    const m = map.current
+    if (!m) return
+    if (!spot) {
+      spotMarker.current?.remove()
+      spotMarker.current = null
+    } else if (!spotMarker.current) {
+      const el = document.createElement('div')
+      el.className = 'spot-pin'
+      spotMarker.current = new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([spot.lng, spot.lat]).addTo(m)
+    } else {
+      spotMarker.current.setLngLat([spot.lng, spot.lat])
+    }
+    if (ready) {
+      const area = spot && pos ? { type: 'FeatureCollection', features: [circle(pos, PICK_RADIUS_M)] } : EMPTY
+      m.getSource('pick-area')?.setData(area)
+    }
+  }, [spot, pos, ready])
 
   // fly to a requested spot
   useEffect(() => {
