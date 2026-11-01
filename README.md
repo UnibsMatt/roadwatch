@@ -25,6 +25,18 @@ secure address. Easiest options:
 - Put it behind a reverse proxy with a certificate (Caddy, Traefik, Cloudflare Tunnel, Tailscale Serve).
 - Or run `tailscale serve` / `cloudflared tunnel --url http://localhost:8080` for a temporary https link.
 
+### Test data
+
+To fill the map with simulated reports (default: 25 within 10 km of 45.858037, 10.168056):
+
+```sh
+docker compose exec backend python -m app.seed
+docker compose exec backend python -m app.seed --count 40 --radius-km 5 --lat 45.86 --lng 10.17
+docker compose exec backend python -m app.seed --clear   # delete reports in the area first
+```
+
+They expire after 20 minutes like real reports, so run it again when they're gone.
+
 ## How it handles privacy
 
 - No accounts, no user table, no device ids, no cookies.
