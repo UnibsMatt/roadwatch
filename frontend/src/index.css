@@ -1,0 +1,145 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Asphalt and concrete. Colour tokens switch with the .dark class. */
+:root {
+  --ground: #e4e6e8;
+  --panel: #f4f5f6;
+  --line: #c4c9ce;
+  --ink: #1a1e22;
+  --mute: #5b646d;
+  --focus: #f2b705;
+}
+.dark {
+  --ground: #16191d;
+  --panel: #20252a;
+  --line: #343b42;
+  --ink: #e9ecee;
+  --mute: #959fa9;
+}
+
+@theme inline {
+  --color-ground: var(--ground);
+  --color-panel: var(--panel);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-mute: var(--mute);
+  --font-sans: 'Barlow', system-ui, sans-serif;
+  --font-display: 'Barlow Semi Condensed', 'Barlow', system-ui, sans-serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Buttons */
+.btn {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--ink);
+  font: 500 16px/1 var(--font-sans);
+}
+.btn:active {
+  background: var(--ground);
+}
+.btn-solid {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--ground);
+}
+.btn-solid:active {
+  opacity: 0.85;
+}
+
+input[type='checkbox'] {
+  accent-color: var(--ink);
+}
+
+/* Map */
+.map-wrap {
+  background: var(--ground);
+}
+/* Dark theme: invert the OpenStreetMap tiles. Markers are DOM nodes, so they keep their colours. */
+.dark .map-wrap .maplibregl-canvas {
+  filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.9);
+}
+.dark .maplibregl-ctrl-attrib {
+  background: rgba(22, 25, 29, 0.8);
+  color: #959fa9;
+}
+.dark .maplibregl-ctrl-attrib a {
+  color: #c4cad0;
+}
+.maplibregl-ctrl-attrib {
+  font-size: 11px;
+}
+
+/* A report pin: the ring is the time left before it disappears. */
+.pin {
+  --c: #888;
+  --g: #fff;
+  --p: 100%;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  background: conic-gradient(var(--c) var(--p), color-mix(in srgb, var(--c) 25%, transparent) 0);
+}
+.pin-disc {
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  display: grid;
+  place-items: center;
+  background: var(--c);
+  color: var(--g);
+  box-shadow: 0 0 0 3px var(--panel);
+  transition: transform 120ms;
+}
+.pin-disc svg {
+  width: 20px;
+  height: 20px;
+}
+.pin.is-selected .pin-disc {
+  transform: scale(1.2);
+}
+
+.me-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: var(--ink);
+  border: 3px solid var(--panel);
+  box-shadow: 0 0 0 1px var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
