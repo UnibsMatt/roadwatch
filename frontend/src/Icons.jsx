@@ -54,3 +54,12 @@ export function CloseIcon(props) {
     </svg>
   )
 }
+
+export function InfoIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" {...stroke} {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v6M12 7.5v.01" />
+    </svg>
+  )
+}

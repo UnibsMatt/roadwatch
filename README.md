@@ -1,7 +1,7 @@
 # RoadWatch
 
 Drivers tap a button to mark an obstacle, police, an accident or a hazard on the map.
-Everyone nearby sees it for 10 minutes, and phones warn you when you get close to one.
+Everyone nearby sees it for 20 minutes, and phones warn you when you get close to one.
 
 - **Backend:** FastAPI (Python 3.13) + asyncpg
 - **Database:** PostgreSQL 18
@@ -31,7 +31,7 @@ secure address. Easiest options:
 - Your position is read on the phone and **never sent to the server**. The app asks for reports in a
   coarse grid (about 33 x 33 km) and works out "am I close to one?" on the device.
 - The only thing stored is a report: type, place (rounded to ~11 m), timestamps and two counters.
-- Reports are deleted when they expire (10 minutes, 30 at most if drivers keep confirming them).
+- Reports are deleted when they expire (20 minutes, 60 at most if drivers keep confirming them).
 - No access logs (uvicorn `--no-access-log`, nginx `access_log off`). The rate limiter keeps IP addresses
   in memory only and forgets them after a minute.
 - Settings (distance, theme, sound) are saved in the browser only.
@@ -59,7 +59,7 @@ API (docs at `/api/docs`):
 | --- | --- | --- |
 | GET | `/api/reports?south&west&north&east` | Active reports in a box (max 1 degree wide) |
 | POST | `/api/reports` | `{kind, lat, lng}`. A same-type report within ~100 m counts as a confirmation |
-| POST | `/api/reports/{id}/confirm` | "Still there": extends by 10 minutes |
+| POST | `/api/reports/{id}/confirm` | "Still there": extends to 20 minutes from now |
 | POST | `/api/reports/{id}/gone` | "It's gone": removed after 3 votes |
 
 ## Notes

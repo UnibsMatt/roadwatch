@@ -1,4 +1,6 @@
-export const TTL_MS = 10 * 60 * 1000
+// Must match TTL_MINUTES in backend/app/main.py.
+export const TTL_MINUTES = 20
+export const TTL_MS = TTL_MINUTES * 60 * 1000
 
 export const KINDS = {
   obstacle: { label: 'Obstacle', long: 'Obstacle on the road', color: '#e8651a', glyph: '#ffffff' },

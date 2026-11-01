@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import MapView from './MapView'
 import SettingsSheet from './SettingsSheet'
-import { CloseIcon, KindIcon, LocateIcon, SlidersIcon } from './Icons'
+import LegalSheet from './LegalSheet'
+import { CloseIcon, InfoIcon, KindIcon, LocateIcon, SlidersIcon } from './Icons'
 import { confirmReport, goneReport, postReport } from './api'
 import { beep, notify, requestNotifications, unlockAudio } from './alerts'
 import { useGeolocation, useNow, useProximityAlerts, useReports, useSettings, useTheme } from './hooks'
-import { KINDS, PICK_RADIUS_M, formatDistance, formatLeft, haversine } from './lib'
+import { KINDS, PICK_RADIUS_M, TTL_MINUTES, formatDistance, formatLeft, haversine } from './lib'
 
 const KIND_ORDER = ['obstacle', 'police', 'accident', 'hazard']
 
@@ -25,6 +26,8 @@ export default function App() {
   const [banner, setBanner] = useState(null)
   const [toast, setToast] = useState(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [legalTab, setLegalTab] = useState(null) // 'privacy' | 'cookies' | 'terms' while the info sheet is open
+  const closeLegal = useCallback(() => setLegalTab(null), [])
   const lastPost = useRef(0)
   const toastTimer = useRef(null)
 
@@ -116,7 +119,7 @@ export default function App() {
       seen.current.add(r.id) // don't alert yourself about your own report
       upsert(r)
       setSpot(null)
-      showToast(`${KINDS[kind].label} reported. It stays on the map for 10 minutes.`)
+      showToast(`${KINDS[kind].label} reported. It stays on the map for ${TTL_MINUTES} minutes.`)
     } catch (e) {
       showToast(e.message)
     }
@@ -125,7 +128,7 @@ export default function App() {
   const confirm = async () => {
     try {
       upsert(await confirmReport(selected.id))
-      showToast('Thanks. Extended by 10 minutes.')
+      showToast(`Thanks. It stays on the map for another ${TTL_MINUTES} minutes.`)
     } catch (e) {
       showToast(e.message)
       remove(selected.id)
@@ -162,6 +165,14 @@ export default function App() {
         <p className="min-w-0 flex-1 truncate text-right text-base text-mute" aria-live="polite">
           {statusLine}
         </p>
+        <button
+          type="button"
+          onClick={() => setLegalTab('privacy')}
+          aria-label="Privacy, cookies and terms of use"
+          className="-mr-3 grid h-11 w-11 place-items-center"
+        >
+          <InfoIcon className="h-6 w-6" />
+        </button>
         <button
           type="button"
           onClick={() => setSettingsOpen(true)}
@@ -234,6 +245,18 @@ export default function App() {
                   'Your position can’t be read. Phones need a secure (https) address and a GPS signal.'}
                 {(status === 'idle' || status === 'asking') &&
                   'It stays on your phone. RoadWatch uses it to warn you about nearby reports and to place yours.'}
+              </p>
+              <p className="mt-2 text-sm text-mute">
+                Reports come from other drivers and may be wrong. Don’t handle your phone while driving. By using
+                RoadWatch you accept the{' '}
+                <button type="button" onClick={() => setLegalTab('terms')} className="underline">
+                  terms of use
+                </button>{' '}
+                and the{' '}
+                <button type="button" onClick={() => setLegalTab('privacy')} className="underline">
+                  privacy notice
+                </button>
+                . No cookies.
               </p>
               {status !== 'denied' && (
                 <button type="button" onClick={enable} className="btn btn-solid mt-3 w-full">
@@ -331,8 +354,15 @@ export default function App() {
       </nav>
 
       {settingsOpen && (
-        <SettingsSheet settings={settings} update={update} onClose={() => setSettingsOpen(false)} />
+        <SettingsSheet
+          settings={settings}
+          update={update}
+          onClose={() => setSettingsOpen(false)}
+          onOpenLegal={setLegalTab}
+        />
       )}
+
+      {legalTab && <LegalSheet initialTab={legalTab} onClose={closeLegal} />}
     </div>
   )
 }

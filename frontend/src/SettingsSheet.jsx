@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { CloseIcon, KindIcon } from './Icons'
+import { LEGAL_TABS } from './LegalSheet'
 import { RADIUS_OPTIONS } from './hooks'
-import { KINDS } from './lib'
+import { KINDS, TTL_MINUTES } from './lib'
 import { beep, notificationState, notify, requestNotifications, unlockAudio } from './alerts'
 
 function Segmented({ label, value, options, onChange }) {
@@ -42,7 +43,7 @@ function Toggle({ label, hint, checked, onChange }) {
   )
 }
 
-export default function SettingsSheet({ settings, update, onClose }) {
+export default function SettingsSheet({ settings, update, onClose, onOpenLegal }) {
   const [perm, setPerm] = useState(notificationState())
 
   const allow = async () => {
@@ -148,8 +149,15 @@ export default function SettingsSheet({ settings, update, onClose }) {
         <h3 className="mt-6 mb-1 font-display text-lg font-semibold">Your privacy</h3>
         <p className="text-base text-mute">
           Your position stays on this phone. RoadWatch only sends a place when you tap a report button, and the
-          server deletes it after 10 minutes. There are no accounts and no history.
+          server deletes it after {TTL_MINUTES} minutes. There are no accounts and no history.
         </p>
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          {LEGAL_TABS.map((t) => (
+            <button key={t.id} type="button" onClick={() => onOpenLegal(t.id)} className="btn">
+              {t.label}
+            </button>
+          ))}
+        </div>
         <p className="mt-3 text-sm text-mute">Map data © OpenStreetMap contributors.</p>
       </section>
     </div>

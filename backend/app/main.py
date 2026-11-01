@@ -7,7 +7,7 @@ Privacy rules this service follows:
     bounding box and work out "am I close?" on the device.
   * No access log (see Dockerfile). The rate limiter keeps IPs in RAM only
     and forgets them after a minute.
-  * Reports expire after 10 minutes (30 at most, if people keep confirming)
+  * Reports expire after 20 minutes (60 at most, if people keep confirming)
     and expired rows are deleted every minute.
 """
 import asyncio
@@ -23,8 +23,8 @@ from fastapi import FastAPI, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 
 DATABASE_URL = os.environ["DATABASE_URL"]
-TTL_MINUTES = 10
-MAX_LIFETIME_MINUTES = 30
+TTL_MINUTES = 20
+MAX_LIFETIME_MINUTES = 60
 GONE_VOTES_TO_REMOVE = 3
 MAX_BOX_DEGREES = 1.0          # biggest area one request may ask for
 POSTS_PER_MINUTE = 6
