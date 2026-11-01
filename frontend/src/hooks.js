@@ -2,14 +2,20 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { fetchBox } from './api'
 import { cellBox, cellKey, haversine } from './lib'
 
-const DEFAULTS = { radius: 500, sound: true, vibrate: true, keepAwake: false, theme: 'system' }
+export const RADIUS_OPTIONS = [1000, 3000, 5000]
+const DEFAULTS = { radius: 1000, sound: true, vibrate: true, keepAwake: false, theme: 'system' }
 const POLL_MS = 8000
 
 // Settings live only in this browser.
 export function useSettings() {
   const [settings, setSettings] = useState(() => {
     try {
-      return { ...DEFAULTS, ...JSON.parse(localStorage.getItem('rw.settings') || '{}') }
+      const saved = { ...DEFAULTS, ...JSON.parse(localStorage.getItem('rw.settings') || '{}') }
+      // Older versions offered 200 m and 500 m; move those to the closest current choice.
+      if (!RADIUS_OPTIONS.includes(saved.radius)) {
+        saved.radius = RADIUS_OPTIONS.reduce((a, b) => (Math.abs(b - saved.radius) < Math.abs(a - saved.radius) ? b : a))
+      }
+      return saved
     } catch {
       return DEFAULTS
     }

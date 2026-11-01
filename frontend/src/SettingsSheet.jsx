@@ -1,5 +1,7 @@
 import { useState } from 'react'
-import { CloseIcon } from './Icons'
+import { CloseIcon, KindIcon } from './Icons'
+import { RADIUS_OPTIONS } from './hooks'
+import { KINDS } from './lib'
 import { beep, notificationState, notify, requestNotifications, unlockAudio } from './alerts'
 
 function Segmented({ label, value, options, onChange }) {
@@ -49,7 +51,7 @@ export default function SettingsSheet({ settings, update, onClose }) {
   }
   const test = () => {
     unlockAudio()
-    if (settings.sound) beep()
+    if (settings.sound) beep('police')
     if (settings.vibrate && navigator.vibrate) navigator.vibrate([220, 110, 220])
     notify('RoadWatch', 'Test alert: police 300 m away', 'test')
   }
@@ -76,15 +78,34 @@ export default function SettingsSheet({ settings, update, onClose }) {
           label="Alert distance"
           value={settings.radius}
           onChange={(radius) => update({ radius })}
-          options={[
-            { value: 200, label: '200 m' },
-            { value: 500, label: '500 m' },
-            { value: 1000, label: '1 km' },
-          ]}
+          options={RADIUS_OPTIONS.map((m) => ({ value: m, label: `${m / 1000} km` }))}
         />
 
         <h3 className="mt-6 mb-1 font-display text-lg font-semibold">How you get alerted</h3>
         <Toggle label="Sound" checked={settings.sound} onChange={(sound) => update({ sound })} />
+        <p className="mt-1 text-sm text-mute">Each kind has its own sound. Tap to hear it.</p>
+        <div className="mt-2 mb-2 grid grid-cols-4 gap-2">
+          {Object.keys(KINDS).map((kind) => (
+            <button
+              key={kind}
+              type="button"
+              onClick={() => {
+                unlockAudio()
+                beep(kind)
+              }}
+              aria-label={`Play the ${KINDS[kind].label} sound`}
+              className="flex flex-col items-center gap-1 rounded-md border border-line py-2"
+            >
+              <span
+                className="grid h-9 w-9 place-items-center rounded-md"
+                style={{ background: KINDS[kind].color, color: KINDS[kind].glyph }}
+              >
+                <KindIcon kind={kind} className="h-5 w-5" />
+              </span>
+              <span className="text-sm font-medium">{KINDS[kind].label}</span>
+            </button>
+          ))}
+        </div>
         <Toggle label="Vibration" checked={settings.vibrate} onChange={(vibrate) => update({ vibrate })} />
         <Toggle
           label="Keep the screen on"

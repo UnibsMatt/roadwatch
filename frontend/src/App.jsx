@@ -42,7 +42,7 @@ export default function App() {
     (r, d) => {
       const text = `${KINDS[r.kind].long}, ${formatDistance(d)} away`
       setBanner({ id: r.id, kind: r.kind, text, lat: r.lat, lng: r.lng })
-      if (settings.sound) beep()
+      if (settings.sound) beep(r.kind)
       if (settings.vibrate && navigator.vibrate) navigator.vibrate([220, 110, 220])
       if (document.hidden) notify('RoadWatch', text, r.id)
     },
