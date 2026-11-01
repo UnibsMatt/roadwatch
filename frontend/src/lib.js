@@ -45,7 +45,7 @@ export function cellBox(key) {
 }
 
 // How far from your own position you can drop a report by tapping the map.
-export const PICK_RADIUS_M = 10000
+export const PICK_RADIUS_M = 1000
 
 // A circle around `c` as a GeoJSON polygon, for drawing on the map.
 export function circle(c, radius, steps = 96) {
