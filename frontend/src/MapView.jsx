@@ -1,8 +1,13 @@
 import { useEffect, useRef } from 'react'
 import * as maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
+import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url'
 import { KINDS, TTL_MS } from './lib'
 import { glyphMarkup } from './Icons'
+
+// MapLibre v6 looks for its worker next to its own file, which doesn't exist after
+// Vite bundles the app. Point it at the copy Vite emits instead.
+maplibregl.setWorkerUrl(workerUrl)
 
 // OpenStreetMap's public tile server is fine for a small group. For heavier use,
 // point VITE_TILE_URL at your own tile server (see README).

@@ -79,6 +79,12 @@ input[type='checkbox'] {
 .map-wrap {
   background: var(--ground);
 }
+/* MapLibre's own CSS sets .maplibregl-map { position: relative }, and it beats Tailwind's
+   layered utilities, which collapses the map to 0px tall. Pin it to fill its parent here. */
+.map-wrap.maplibregl-map {
+  position: absolute;
+  inset: 0;
+}
 /* Dark theme: invert the OpenStreetMap tiles. Markers are DOM nodes, so they keep their colours. */
 .dark .map-wrap .maplibregl-canvas {
   filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.9);
